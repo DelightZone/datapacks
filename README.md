@@ -15,8 +15,8 @@ With this datapack, you can sort items based on any criteria, and the output wil
 
 ## 🛠️ Installation
 
-1. Download the datapack file.
-2. Place the datapack in the `datapacks` folder of your Minecraft world.
+1. Download the datapack file and unzip it.
+2. Place the datapack folder in the `datapacks` folder of your Minecraft world.
 3. Run the command: `/reload` to load the datapack.
 4. Use the function `function ceevyte:sort/util/init` to start sorting.
 

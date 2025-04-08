@@ -1,4 +1,2 @@
-data modify storage ceevyte sort.zprivate.lock append from storage ceevyte sort.zprivate.compare.b
-data remove storage ceevyte sort.zprivate.compare.b
-data modify storage ceevyte sort.zprivate.lock append from storage ceevyte sort.zprivate.compare.a
-data remove storage ceevyte sort.zprivate.compare.a
+function ceevyte:sort/zprivate/error/lower_than_two
+data modify storage minecraft:ceevyte sort.zprivate.lock set from storage minecraft:ceevyte sort.zprivate.input

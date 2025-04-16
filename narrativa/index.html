@@ -27,8 +27,8 @@
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid #333;
       border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 30px;
+      padding: 24px;
+      margin-bottom: 40px;
       box-shadow: 0 5px 15px rgba(0,0,0,0.2);
       backdrop-filter: blur(10px);
       transition: transform 0.2s ease;
@@ -39,34 +39,36 @@
     }
 
     .text-part {
-      margin-bottom: 10px;
+      margin-bottom: 20px;
     }
 
     input[type="text"], textarea, input[type="color"] {
       background: rgba(255,255,255,0.07);
       color: #fff;
       border: 1px solid #444;
-      padding: 8px;
+      padding: 8px 10px;
       border-radius: 8px;
       font-family: 'Roboto Mono', monospace;
       font-size: 14px;
-      margin-right: 6px;
+      margin: 6px 8px 6px 0;
       vertical-align: middle;
     }
 
     input[type="color"] {
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
       padding: 0;
       border-radius: 8px;
       border: none;
       cursor: pointer;
       display: inline-block;
+      vertical-align: middle;
     }
 
     .color-wrapper {
-      display: inline-block;
-      vertical-align: middle;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
 
     textarea {
@@ -117,8 +119,8 @@
 </head>
 <body>
   <div style="text-align: center; margin-bottom: 40px;">
-  <h1 style="font-size: 36px;">Narrativa Dialogue Generator</h1>
-  <p style="font-size: 20px; color: #aaa;">Stylize your story. Customize your magic.</p>
+    <h1 style="font-size: 36px;">Narrativa Dialogue Generator</h1>
+    <p style="font-size: 20px; color: #aaa;">Stylize your story. Customize your magic.</p>
   </div>
 
   <h2>Custom Fonts</h2>
@@ -141,8 +143,7 @@
     const fontsContainer = document.getElementById("fonts-container");
     const output = document.getElementById("output");
     const preview = document.getElementById("preview");
-    const fontMap = {}; // ID => font-family
-
+    const fontMap = {};
     let lineId = 0;
     let fontId = 0;
 
@@ -154,13 +155,15 @@
 
       block.innerHTML = `
         <h3>Line #${lineIndex + 1}</h3>
+        Default Font: <input type="text" id="default-font-${lineIndex}" value="minecraft:default"><br><br>
         <div class="parts" id="parts-${lineIndex}"></div>
         <button onclick="addPart(${lineIndex})">➕ Add Text Part</button><br><br>
         Sound: <input type="text" id="sound-${lineIndex}" value="minecraft:entity.breeze.charge"><br>
         Commands (one per line):<br>
-        <textarea id="commands-${lineIndex}" rows="3" cols="50" placeholder="say hi&#10;tellraw @a hello"></textarea><br>
+        <textarea id="commands-${lineIndex}" rows="3" cols="50" placeholder="say hi\ntellraw @a hello"></textarea><br>
         <button onclick="this.parentElement.remove(); updateOutput()">❌ Remove Line</button>
       `;
+
       linesContainer.appendChild(block);
       addPart(lineIndex);
       updateOutput();
@@ -173,7 +176,7 @@
       div.innerHTML = `
         Text: <input type="text" class="text" placeholder="Text">
         Color: <input type="color" class="color" value="#ffffff">
-        Font: <input type="text" class="font" value="minecraft:default">
+        Font: <input type="text" class="font" placeholder="(optional)">
         <button onclick="this.parentElement.remove(); updateOutput()">❌</button>
       `;
       partContainer.appendChild(div);
@@ -194,7 +197,6 @@
 
       fontsContainer.appendChild(block);
 
-      // File upload logic
       block.querySelector(`#${internalId}-file`).addEventListener("change", (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -233,16 +235,25 @@
         const parts = block.querySelectorAll(".text-part");
         const sound = document.getElementById(`sound-${lineIndex}`).value;
         const cmdStr = document.getElementById(`commands-${lineIndex}`).value;
+        const defaultFont = document.getElementById(`default-font-${lineIndex}`).value.trim();
         const commands = cmdStr.split("\n").map(c => c.trim()).filter(c => c !== "");
 
         const textParts = [];
+        const emptyPart = { text: "" };
+        if (defaultFont && defaultFont !== "minecraft:default") {
+          emptyPart.font = defaultFont;
+        }
+        textParts.push(emptyPart);
 
         parts.forEach(part => {
           const text = part.querySelector(".text").value;
           const color = part.querySelector(".color").value;
-          const font = part.querySelector(".font").value;
+          const font = part.querySelector(".font").value.trim();
 
-          const jsonPart = { text, color, font };
+          const jsonPart = { text, color };
+          if (font !== "") {
+            jsonPart.font = font;
+          }
           textParts.push(jsonPart);
         });
 
@@ -255,12 +266,11 @@
 
       output.value = `data modify storage ceevyte narrativa.main.input set value ${JSON.stringify(data, null, 2)}`;
 
-      // Update preview
       preview.innerHTML = data.map(line => {
         const parts = JSON.parse(line.text);
         return parts.map(p => {
           const fontFamily = fontMap[p.font] || "inherit";
-          return `<span class="mc-text" style="color:${p.color}; font-family:'${fontFamily}'">${p.text}</span>`;
+          return `<span class="mc-text" style="color:${p.color || '#fff'}; font-family:'${fontFamily}'">${p.text}</span>`;
         }).join("") + "<br>";
       }).join("");
     }

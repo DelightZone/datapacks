@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Minecraft Dialogue Generator</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #111;
+      color: #eee;
+      padding: 20px;
+    }
+    .line-block, .font-block {
+      border: 1px solid #444;
+      padding: 10px;
+      margin-bottom: 20px;
+      background: #1a1a1a;
+    }
+    .text-part {
+      margin-bottom: 5px;
+    }
+    .preview {
+      background: #222;
+      padding: 10px;
+      border: 1px solid #333;
+      margin-top: 20px;
+    }
+    .mc-text {
+      white-space: pre-wrap;
+      display: inline;
+    }
+    input[type="text"], textarea {
+      background: #000;
+      color: #eee;
+      border: 1px solid #333;
+      padding: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Minecraft Dialogue Generator (Multi-Part)</h1>
+
+  <h2>Custom Fonts</h2>
+  <div id="fonts-container"></div>
+  <button onclick="addFont()">➕ Add Font</button>
+
+  <h2>Dialogue Lines</h2>
+  <div id="lines-container"></div>
+  <button onclick="addLine()">➕ Add Line</button>
+
+  <h2>Preview</h2>
+  <div class="preview" id="preview"></div>
+
+  <h2>Generated Output</h2>
+  <textarea id="output" style="width:100%;height:200px;"></textarea><br>
+  <button onclick="copyOutput()">📋 Copy</button>
+
+  <script>
+    const linesContainer = document.getElementById("lines-container");
+    const fontsContainer = document.getElementById("fonts-container");
+    const output = document.getElementById("output");
+    const preview = document.getElementById("preview");
+    const fontMap = {}; // ID => font-family
+
+    let lineId = 0;
+    let fontId = 0;
+
+    function addLine() {
+      const lineIndex = lineId++;
+      const block = document.createElement("div");
+      block.className = "line-block";
+      block.dataset.line = lineIndex;
+
+      block.innerHTML = `
+        <h3>Line #${lineIndex + 1}</h3>
+        <div class="parts" id="parts-${lineIndex}"></div>
+        <button onclick="addPart(${lineIndex})">➕ Add Text Part</button><br><br>
+        Sound: <input type="text" id="sound-${lineIndex}" value="minecraft:entity.breeze.charge"><br>
+        Commands (one per line):<br>
+        <textarea id="commands-${lineIndex}" rows="3" cols="50" placeholder="say hi&#10;tellraw @a hello"></textarea><br>
+        <button onclick="this.parentElement.remove(); updateOutput()">❌ Remove Line</button>
+      `;
+      linesContainer.appendChild(block);
+      addPart(lineIndex);
+      updateOutput();
+    }
+
+    function addPart(lineIndex) {
+      const partContainer = document.getElementById(`parts-${lineIndex}`);
+      const div = document.createElement("div");
+      div.className = "text-part";
+      div.innerHTML = `
+        Text: <input type="text" class="text" placeholder="Text">
+        Color: <input type="color" class="color" value="#ffffff">
+        Font: <input type="text" class="font" value="minecraft:default">
+        <button onclick="this.parentElement.remove(); updateOutput()">❌</button>
+      `;
+      partContainer.appendChild(div);
+      updateOutput();
+    }
+
+    function addFont() {
+      const block = document.createElement("div");
+      block.className = "font-block";
+      const currentFontId = fontId++;
+      const internalId = `font-${currentFontId}`;
+
+      block.innerHTML = `
+        Font ID: <input type="text" id="${internalId}-id" value="ceevyte:font_${currentFontId}"> 
+        Upload File: <input type="file" id="${internalId}-file" accept=".ttf,.woff,.woff2">
+        <button onclick="this.parentElement.remove(); updateOutput()">❌</button>
+      `;
+
+      fontsContainer.appendChild(block);
+
+      // File upload logic
+      block.querySelector(`#${internalId}-file`).addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          const fontData = event.target.result;
+          const idInput = block.querySelector(`#${internalId}-id`);
+          const fontId = idInput.value;
+          if (!fontId) return;
+
+          const fontFamily = fontId.replace(/[^a-zA-Z0-9]/g, "_");
+          const style = document.createElement("style");
+          style.innerHTML = `
+            @font-face {
+              font-family: "${fontFamily}";
+              src: url(${fontData});
+            }
+          `;
+          document.head.appendChild(style);
+          fontMap[fontId] = fontFamily;
+          updateOutput();
+        };
+        reader.readAsDataURL(file);
+      });
+
+      updateOutput();
+    }
+
+    function updateOutput() {
+      const lineBlocks = linesContainer.querySelectorAll(".line-block");
+      const data = [];
+
+      lineBlocks.forEach(block => {
+        const lineIndex = block.dataset.line;
+        const parts = block.querySelectorAll(".text-part");
+        const sound = document.getElementById(`sound-${lineIndex}`).value;
+        const cmdStr = document.getElementById(`commands-${lineIndex}`).value;
+        const commands = cmdStr.split("\n").map(c => c.trim()).filter(c => c !== "");
+
+        const textParts = [];
+
+        parts.forEach(part => {
+          const text = part.querySelector(".text").value;
+          const color = part.querySelector(".color").value;
+          const font = part.querySelector(".font").value;
+
+          const jsonPart = { text, color, font };
+          textParts.push(jsonPart);
+        });
+
+        data.push({
+          text: JSON.stringify(textParts),
+          args: { sound },
+          commands
+        });
+      });
+
+      output.value = `data modify storage ceevyte narrativa.main.input set value ${JSON.stringify(data, null, 2)}`;
+
+      // Update preview
+      preview.innerHTML = data.map(line => {
+        const parts = JSON.parse(line.text);
+        return parts.map(p => {
+          const fontFamily = fontMap[p.font] || "inherit";
+          return `<span class="mc-text" style="color:${p.color}; font-family:'${fontFamily}'">${p.text}</span>`;
+        }).join("") + "<br>";
+      }).join("");
+    }
+
+    function copyOutput() {
+      navigator.clipboard.writeText(output.value);
+      alert("Copied to clipboard!");
+    }
+
+    setInterval(updateOutput, 300);
+    addLine();
+  </script>
+</body>
+</html>

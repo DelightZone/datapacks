@@ -445,7 +445,7 @@
 	  const outputText = output.value;
 	  
 	  // Add the function start command before the data modify line
-	  const mcfunctionText = `# Narrativa Dialogue Function\nfunction ceevyte:narrativa/util/start\n${outputText}`;
+	  const mcfunctionText = `# Narrativa Dialogue Function\n${outputText}\n\nfunction ceevyte:narrativa/util/start`;
 
 	  // Create a Blob with the new .mcfunction format
 	  const blob = new Blob([mcfunctionText], { type: "application/octet-stream" });

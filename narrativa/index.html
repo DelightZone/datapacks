@@ -441,69 +441,72 @@
     setInterval(updateOutput, 300);
     addLine();
 
+	// 1) DOWNLOAD: emit comment → data modify → function start
 	function downloadFile() {
-	  const outputText = output.value;
-	  
-	  // Add the function start command before the data modify line
-	  const mcfunctionText = `# Narrativa Dialogue Function\n${outputText}\n\nfunction ceevyte:narrativa/util/start`;
+	  const outputText = output.value.trim();
+	  // Build the mcfunction text in the correct order:
+	  const mcfunctionText = [
+		'# Narrativa Dialogue Function',
+		outputText,
+		'function ceevyte:narrativa/util/start'
+	  ].join('\n') + '\n';
 
-	  // Create a Blob with the new .mcfunction format
 	  const blob = new Blob([mcfunctionText], { type: "application/octet-stream" });
 	  const url = URL.createObjectURL(blob);
 	  const a = document.createElement("a");
 	  a.href = url;
-	  a.download = "narrativa_dialogue.mcfunction"; // Change the download file extension to .mcfunction
+	  a.download = "narrativa_dialogue.mcfunction";
 	  a.click();
 	  URL.revokeObjectURL(url);
+	}
+
+	// 2) PARSE for upload: pull out exactly the JSON array
+	function parseMcfunction(content) {
+	  // Match: data modify ... set value <JSON array>
+	  const re = /data modify storage ceevyte narrativa\.main\.input set value\s+(\[[\s\S]*?\])/
+	  const match = content.match(re);
+	  if (!match) {
+		throw new Error('Invalid .mcfunction file format');
+	  }
+	  return JSON.parse(match[1]);
+	}
+
+	function extractNarrativaData(content) {
+	  // find the JSON array in the text (between the first '[' and the last ']')
+	  const start = content.indexOf('[');
+	  const end   = content.lastIndexOf(']');
+	  if (start === -1 || end === -1 || end < start) {
+		throw new Error("No JSON array found in file.");
+	  }
+	  const jsonText = content.slice(start, end + 1);
+	  return JSON.parse(jsonText);
 	}
 
 	function uploadFile(event) {
 	  const file = event.target.files[0];
 	  if (!file) return;
 
-	  const fileExtension = file.name.split('.').pop().toLowerCase();
-	  
-	  // Only proceed if the file is either .mcfunction or .json
-	  if (fileExtension !== 'mcfunction' && fileExtension !== 'json') {
+	  // Only allow .mcfunction or .json by extension
+	  const ext = file.name.split('.').pop().toLowerCase();
+	  if (ext !== 'mcfunction' && ext !== 'json') {
 		alert('Invalid file type. Please upload a .mcfunction or .json file.');
 		return;
 	  }
 
 	  const reader = new FileReader();
-	  reader.onload = function (e) {
-		const content = e.target.result;
-
+	  reader.onload = function(e) {
 		try {
-		  if (fileExtension === 'mcfunction') {
-			// Handle .mcfunction file
-			const data = parseMcfunction(content);
-			restoreFromData(data);
-		  } else if (fileExtension === 'json') {
-			// Handle .json file
-			const jsonStr = content.match(/set value (.+)$/s)?.[1];
-			const data = JSON.parse(jsonStr);
-			restoreFromData(data);
-		  }
+		  // Always extract the JSON block, regardless of extension
+		  const data = extractNarrativaData(e.target.result);
+		  restoreFromData(data);
 		} catch (err) {
-		  alert('Failed to parse file. Make sure it\'s a valid Narrativa export.');
 		  console.error(err);
+		  alert("Failed to parse file. Make sure it's a valid Narrativa export.");
 		}
 	  };
 	  reader.readAsText(file);
 	}
 
-	function parseMcfunction(content) {
-	  // This function will parse the .mcfunction file
-	  // We will search for the data modify storage line and extract the JSON data from it.
-	  
-	  const match = content.match(/data modify storage ceevyte narrativa.main.input set value (.+)$/s);
-	  
-	  if (match) {
-		return JSON.parse(match[1]); // Return parsed data
-	  }
-
-	  throw new Error('Invalid .mcfunction file format');
-	}
 
 	function restoreFromData(data) {
 	  linesContainer.innerHTML = "";

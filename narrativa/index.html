@@ -508,11 +508,17 @@
 		  lastPart.querySelector(".color").value = part.color || "#ffffff";
 		  lastPart.querySelector(".color-hex").value = part.color || "#ffffff";
 		  lastPart.querySelector(".font").value = part.font || "";
+
+		  // Set bold, italic, and strikethrough checkbox states
+		  lastPart.querySelector(".bold").checked = part.bold || false;
+		  lastPart.querySelector(".italic").checked = part.italic || false;
+		  lastPart.querySelector(".strikethrough").checked = part.strikethrough || false;
 		});
 	  });
 
 	  updateOutput();
 	}
+
 	function moveLine(btn, direction) {
 	  const block = btn.closest(".line-block");
 	  const sibling = direction === -1 ? block.previousElementSibling : block.nextElementSibling;

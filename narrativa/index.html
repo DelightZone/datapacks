@@ -440,11 +440,12 @@
 
     setInterval(updateOutput, 300);
     addLine();
+
 	function downloadFile() {
 	  const outputText = output.value;
 	  
-	  // Adjust the output format to suit the .mcfunction format (Minecraft command functions).
-	  const mcfunctionText = `# Narrativa Dialogue Function\n${outputText}`;
+	  // Add the function start command before the data modify line
+	  const mcfunctionText = `# Narrativa Dialogue Function\nfunction ceevyte:narrativa/util/start\n${outputText}`;
 
 	  // Create a Blob with the new .mcfunction format
 	  const blob = new Blob([mcfunctionText], { type: "application/octet-stream" });
@@ -493,9 +494,8 @@
 
 	function parseMcfunction(content) {
 	  // This function will parse the .mcfunction file
-	  // Here, you can define the way the .mcfunction file is parsed, for now let's assume it contains JSON-like data:
+	  // We will search for the data modify storage line and extract the JSON data from it.
 	  
-	  // Extract JSON data from the .mcfunction file (you can adjust this as needed for your file's structure)
 	  const match = content.match(/data modify storage ceevyte narrativa.main.input set value (.+)$/s);
 	  
 	  if (match) {

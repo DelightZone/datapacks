@@ -147,6 +147,10 @@
   <h2>Generated Output</h2>
   <textarea id="output" style="width:100%;height:200px;"></textarea><br>
   <button onclick="copyOutput()">📋 Copy</button>
+  <button onclick="downloadFile()">💾 Download</button>
+  <input type="file" accept=".json" id="upload-file" style="display:none" onchange="uploadFile(event)">
+  <button onclick="document.getElementById('upload-file').click()">📂 Upload</button>
+
 
   <script>
     const linesContainer = document.getElementById("lines-container");
@@ -318,6 +322,78 @@
 
     setInterval(updateOutput, 300);
     addLine();
+	function downloadFile() {
+	  const outputText = output.value;
+	  const blob = new Blob([outputText], { type: "application/json" });
+	  const url = URL.createObjectURL(blob);
+	  const a = document.createElement("a");
+	  a.href = url;
+	  a.download = "narrativa_dialogue.json";
+	  a.click();
+	  URL.revokeObjectURL(url);
+	}
+
+	function uploadFile(event) {
+	  const file = event.target.files[0];
+	  if (!file) return;
+
+	  const reader = new FileReader();
+	  reader.onload = function (e) {
+		const content = e.target.result;
+		try {
+		  const jsonStr = content.match(/set value (.+)$/s)?.[1];
+		  const data = JSON.parse(jsonStr);
+		  restoreFromData(data);
+		} catch (err) {
+		  alert("Failed to parse file. Make sure it's a valid Narrativa export.");
+		  console.error(err);
+		}
+	  };
+	  reader.readAsText(file);
+	}
+
+	function restoreFromData(data) {
+	  linesContainer.innerHTML = "";
+	  lineId = 0;
+
+	  data.forEach((line, i) => {
+		addLine(); // adds a new line UI
+		const block = linesContainer.querySelector(`[data-line="${i}"]`);
+		const defaultFontInput = document.getElementById(`default-font-${i}`);
+		const soundInput = document.getElementById(`sound-${i}`);
+		const commandsInput = document.getElementById(`commands-${i}`);
+		const partsContainer = document.getElementById(`parts-${i}`);
+
+		const parts = JSON.parse(line.text);
+		const commands = line.commands || [];
+		const sound = line.args?.sound || "";
+
+		// First part may just be the default font (which should not show up in the UI)
+		const first = parts[0];
+		if (first && first.text === "") {
+		  // Set the default font input to the value from the first part
+		  defaultFontInput.value = first.font || "minecraft:default";
+		  // Remove the empty part from the array
+		  parts.shift();
+		}
+
+		soundInput.value = sound;
+		commandsInput.value = commands.join("\n");
+		partsContainer.innerHTML = "";
+
+		// Add the remaining parts as usual
+		parts.forEach(part => {
+		  addPart(i);
+		  const lastPart = partsContainer.lastElementChild;
+		  lastPart.querySelector(".text").value = part.text || "";
+		  lastPart.querySelector(".color").value = part.color || "#ffffff";
+		  lastPart.querySelector(".color-hex").value = part.color || "#ffffff";
+		  lastPart.querySelector(".font").value = part.font || "";
+		});
+	  });
+
+	  updateOutput();
+	}
   </script>
 </body>
 </html>

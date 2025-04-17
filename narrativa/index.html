@@ -27,8 +27,8 @@
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid #333;
       border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 40px;
+      padding: 20px;
+      margin-bottom: 30px;
       box-shadow: 0 5px 15px rgba(0,0,0,0.2);
       backdrop-filter: blur(10px);
       transition: transform 0.2s ease;
@@ -38,37 +38,47 @@
       transform: scale(1.01);
     }
 
-    .text-part {
-      margin-bottom: 20px;
-    }
+	.text-part {
+	  margin-bottom: 10px;
+	  display: flex;
+	  align-items: center;
+	  gap: 10px;
+	}
+
+	.remove-button {
+	  display: flex;
+	  align-items: left;
+	  height: 100%;
+	  margin-bottom: 9px;
+	}
 
     input[type="text"], textarea, input[type="color"] {
       background: rgba(255,255,255,0.07);
       color: #fff;
       border: 1px solid #444;
-      padding: 8px 10px;
+      padding: 8px;
       border-radius: 8px;
       font-family: 'Roboto Mono', monospace;
       font-size: 14px;
-      margin: 6px 8px 6px 0;
+      margin-right: 10px;
       vertical-align: middle;
     }
 
     input[type="color"] {
-      width: 40px;
-      height: 40px;
+      width: 36px;
+      height: 36px;
       padding: 0;
       border-radius: 8px;
       border: none;
       cursor: pointer;
       display: inline-block;
-      vertical-align: middle;
     }
 
     .color-wrapper {
       display: inline-flex;
       align-items: center;
       gap: 8px;
+      vertical-align: middle;
     }
 
     textarea {
@@ -157,9 +167,9 @@
         <h3>Line #${lineIndex + 1}</h3>
         Default Font: <input type="text" id="default-font-${lineIndex}" value="minecraft:default"><br><br>
         <div class="parts" id="parts-${lineIndex}"></div>
-        <button onclick="addPart(${lineIndex})">➕ Add Text Part</button><br><br>
-        Sound: <input type="text" id="sound-${lineIndex}" value="minecraft:entity.breeze.charge"><br>
-        Commands (one per line):<br>
+        <button onclick="addPart(${lineIndex})">➕ Add Text Part</button><br><br><br>
+        Sound: <input type="text" id="sound-${lineIndex}" value="minecraft:entity.breeze.charge"><br><br><br>
+        Commands (one per line):<br><br>
         <textarea id="commands-${lineIndex}" rows="3" cols="50" placeholder="say hi\ntellraw @a hello"></textarea><br>
         <button onclick="this.parentElement.remove(); updateOutput()">❌ Remove Line</button>
       `;
@@ -169,19 +179,41 @@
       updateOutput();
     }
 
-    function addPart(lineIndex) {
-      const partContainer = document.getElementById(`parts-${lineIndex}`);
-      const div = document.createElement("div");
-      div.className = "text-part";
-      div.innerHTML = `
-        Text: <input type="text" class="text" placeholder="Text">
-        Color: <input type="color" class="color" value="#ffffff">
-        Font: <input type="text" class="font" placeholder="(optional)">
-        <button onclick="this.parentElement.remove(); updateOutput()">❌</button>
-      `;
-      partContainer.appendChild(div);
-      updateOutput();
-    }
+	function addPart(lineIndex) {
+	  const partContainer = document.getElementById(`parts-${lineIndex}`);
+	  const div = document.createElement("div");
+	  div.className = "text-part";
+	  div.innerHTML = `
+		Text: <input type="text" class="text">
+		<div class="color-picker">
+		  <input type="color" class="color" value="#ffffff">
+		  <input type="text" class="color-hex" placeholder="#ffffff" value="#ffffff">
+		</div>
+		Font: <input type="text" class="font" placeholder="minecraft:default">
+		<div class="remove-button">
+		  <button onclick="this.closest('.text-part').remove(); updateOutput()">❌</button>
+		</div>
+	  `;
+	  partContainer.appendChild(div);
+
+	  const colorInput = div.querySelector(".color");
+	  const hexInput = div.querySelector(".color-hex");
+
+	  colorInput.addEventListener("input", () => {
+		hexInput.value = colorInput.value.toLowerCase();
+		updateOutput();
+	  });
+
+	  hexInput.addEventListener("input", () => {
+		const val = hexInput.value.trim();
+		if (/^#([0-9A-Fa-f]{6})$/.test(val)) {
+		  colorInput.value = val.toLowerCase();
+		  updateOutput();
+		}
+	  });
+
+	  updateOutput();
+	}
 
     function addFont() {
       const block = document.createElement("div");
@@ -266,13 +298,17 @@
 
       output.value = `data modify storage ceevyte narrativa.main.input set value ${JSON.stringify(data, null, 2)}`;
 
-      preview.innerHTML = data.map(line => {
-        const parts = JSON.parse(line.text);
-        return parts.map(p => {
-          const fontFamily = fontMap[p.font] || "inherit";
-          return `<span class="mc-text" style="color:${p.color || '#fff'}; font-family:'${fontFamily}'">${p.text}</span>`;
-        }).join("") + "<br>";
-      }).join("");
+		preview.innerHTML = data.map((line, i) => {
+		  const parts = JSON.parse(line.text);
+		  const defaultFontId = document.getElementById(`default-font-${i}`).value.trim();
+		  const defaultFontFamily = fontMap[defaultFontId] || "inherit";
+
+		  return parts.map(p => {
+			const fontId = p.font || defaultFontId; // fallback to default font
+			const fontFamily = fontMap[fontId] || defaultFontFamily;
+			return `<span class="mc-text" style="color:${p.color || '#fff'}; font-family:'${fontFamily}'">${p.text}</span>`;
+		  }).join("") + "<br>";
+		}).join("");
     }
 
     function copyOutput() {

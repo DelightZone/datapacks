@@ -208,9 +208,8 @@
   <textarea id="output" style="width:100%;height:200px;"></textarea><br>
   <button onclick="copyOutput()">📋 Copy</button>
   <button onclick="downloadFile()">💾 Download</button>
-  <input type="file" accept=".json" id="upload-file" style="display:none" onchange="uploadFile(event)">
+  <input type="file" accept=".json,.mcfunction" id="upload-file" style="display:none" onchange="uploadFile(event)">
   <button onclick="document.getElementById('upload-file').click()">📂 Upload</button>
-
 
   <script>
     const linesContainer = document.getElementById("lines-container");
@@ -443,11 +442,16 @@
     addLine();
 	function downloadFile() {
 	  const outputText = output.value;
-	  const blob = new Blob([outputText], { type: "application/json" });
+	  
+	  // Adjust the output format to suit the .mcfunction format (Minecraft command functions).
+	  const mcfunctionText = `# Narrativa Dialogue Function\n${outputText}`;
+
+	  // Create a Blob with the new .mcfunction format
+	  const blob = new Blob([mcfunctionText], { type: "application/octet-stream" });
 	  const url = URL.createObjectURL(blob);
 	  const a = document.createElement("a");
 	  a.href = url;
-	  a.download = "narrativa_dialogue.json";
+	  a.download = "narrativa_dialogue.mcfunction"; // Change the download file extension to .mcfunction
 	  a.click();
 	  URL.revokeObjectURL(url);
 	}
@@ -456,19 +460,49 @@
 	  const file = event.target.files[0];
 	  if (!file) return;
 
+	  const fileExtension = file.name.split('.').pop().toLowerCase();
+	  
+	  // Only proceed if the file is either .mcfunction or .json
+	  if (fileExtension !== 'mcfunction' && fileExtension !== 'json') {
+		alert('Invalid file type. Please upload a .mcfunction or .json file.');
+		return;
+	  }
+
 	  const reader = new FileReader();
 	  reader.onload = function (e) {
 		const content = e.target.result;
+
 		try {
-		  const jsonStr = content.match(/set value (.+)$/s)?.[1];
-		  const data = JSON.parse(jsonStr);
-		  restoreFromData(data);
+		  if (fileExtension === 'mcfunction') {
+			// Handle .mcfunction file
+			const data = parseMcfunction(content);
+			restoreFromData(data);
+		  } else if (fileExtension === 'json') {
+			// Handle .json file
+			const jsonStr = content.match(/set value (.+)$/s)?.[1];
+			const data = JSON.parse(jsonStr);
+			restoreFromData(data);
+		  }
 		} catch (err) {
-		  alert("Failed to parse file. Make sure it's a valid Narrativa export.");
+		  alert('Failed to parse file. Make sure it\'s a valid Narrativa export.');
 		  console.error(err);
 		}
 	  };
 	  reader.readAsText(file);
+	}
+
+	function parseMcfunction(content) {
+	  // This function will parse the .mcfunction file
+	  // Here, you can define the way the .mcfunction file is parsed, for now let's assume it contains JSON-like data:
+	  
+	  // Extract JSON data from the .mcfunction file (you can adjust this as needed for your file's structure)
+	  const match = content.match(/data modify storage ceevyte narrativa.main.input set value (.+)$/s);
+	  
+	  if (match) {
+		return JSON.parse(match[1]); // Return parsed data
+	  }
+
+	  throw new Error('Invalid .mcfunction file format');
 	}
 
 	function restoreFromData(data) {

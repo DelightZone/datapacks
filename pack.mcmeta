@@ -1,0 +1,10 @@
+{
+  "pack": {
+    "description": "\u00a7c\u25a0 1.0.0 ALPHA\u00a7r\n\u25a0 By @ceevyte",
+    "pack_format": 42,
+    "supported_formats": {
+      "min_inclusive": 42,
+      "max_inclusive": 99
+    }
+  }
+}

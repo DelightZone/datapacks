@@ -1,0 +1,178 @@
+/* ---- Base ---- */
+:root {
+    --bg: #1e1e1e;
+    --panel: #2c2c2c;
+    --text: #eee;
+    --label: #ccc;
+    --primary: #3a6;
+    --primary-hover: #2f8;
+    --danger: #f33;
+    --hover-shadow: rgba(255,255,255,0.1);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 0;
+}
+
+h1, h2 { margin: 0; }
+h1 { font-size: 1.8em; letter-spacing: 0.5px; }
+h2 { font-size: 1.2em; margin-bottom: 0.5em; }
+
+header {
+    background: #282828;
+    padding: 1em;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+main {
+    max-width: 900px;
+    margin: auto;
+    padding: 1.5em;
+}
+
+/* ---- Inputs & Labels ---- */
+label {
+    display: block;
+    margin-top: 1em;
+    font-weight: bold;
+    color: var(--label);
+}
+
+input[type=text],
+input[type=number],
+textarea,
+select {
+    width: 100%;
+    padding: 0.6em;
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid #555;
+    border-radius: 5px;
+    font-family: monospace;
+    transition: border-color 0.2s;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--primary-hover);
+    outline: none;
+}
+
+/* ---- Buttons ---- */
+button {
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.primary-btn {
+    padding: 0.5em 1em;
+    background: var(--primary);
+    color: #000;
+    margin-top: 1em;
+}
+
+.primary-btn:hover {
+    background: var(--primary-hover);
+    color: #fff;
+}
+
+.remove-line {
+    padding: 0.3em 0.7em;
+    background: var(--primary);
+    color: #000;
+    font-weight: bold;
+    padding: 0.3em 0.7em;
+    border-radius: 4px;
+    margin: 0;
+}
+
+.remove-line:hover {
+	background: var(--primary-hover);
+    color: #fff;
+}
+
+.drag-handle {
+    cursor: grab;
+    user-select: none;
+    margin-left: 0.5em;
+}
+
+/* ---- Line Blocks ---- */
+.lines {
+    margin-top: 1em;
+}
+
+.line {
+    background: var(--panel);
+    padding: 1em;
+    margin-bottom: 1em;
+    border: 1px solid #555;
+    border-radius: 6px;
+    cursor: grab;
+    box-shadow: 0 2px 4px var(--hover-shadow);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.line:hover {
+    box-shadow: 0 4px 8px var(--hover-shadow);
+}
+
+.line.dragging {
+    opacity: 0.8;
+    transform: scale(0.98);
+}
+
+.line-header {
+    display: flex;
+    justify-content: space-between; /* label left, button right */
+    align-items: center;            /* vertical alignment */
+    margin-bottom: 0.5em;
+}
+
+.line-header label {
+    margin: 0;
+    font-weight: bold;
+    color: var(--label);
+}
+
+.line-fields {
+    display: flex;
+    gap: 1em;
+    flex-wrap: wrap;
+    margin-top: 0.5em;
+}
+
+.line-fields > div { flex: 1 1 8em; margin-bottom: 0.5em; }
+
+textarea { min-height: 80px; resize: vertical; }
+
+/* ---- Output ---- */
+pre#output {
+    background: #111;
+    padding: 1em;
+    overflow-x: auto;
+    border-radius: 5px;
+    margin-top: 0.5em;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* ---- Sections ---- */
+section { margin-top: 2em; }
+
+/* ---- Responsive ---- */
+@media (max-width: 600px) {
+    .line-fields { flex-direction: column; }
+    button { width: 100%; }
+}
